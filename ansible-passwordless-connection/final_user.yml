@@ -1,0 +1,17 @@
+---
+- name: "Using ec2 host"
+  hosts: ec2
+  tasks:
+   - name: "Creating group"
+     group:
+        name: developer
+        state: present
+
+   - name: Set User Password on Managed Node
+     user:
+        name: "{{ lookup('ini', 'name section=client file=user_file.txt') }}"
+        password: "{{ lookup('ini', 'password section=client file=user_file.txt') | password_hash('sha512')  }}"
+        group: developer
+        state: present
+     ignore_errors: yes
+...
