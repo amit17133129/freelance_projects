@@ -1,7 +1,7 @@
 scenario                                 = "test-tgw" 
 env                                      = ["dev", "production", "management"]
-access_key                               = "AKIAWTVT3K2VHRZOK54L"
-secret_key                               = "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"
+access_key                               = ""
+secret_key                               = ""
 region                                   = "us-east-1"
 cidr_block                               = ["10.10.0.0/16", "10.11.0.0/16", "10.12.0.0/16"]
 vpc_sub_1                                = ["vpc-1-sub-a", "vpc-2-sub-a", "vpc-3-sub-a"]

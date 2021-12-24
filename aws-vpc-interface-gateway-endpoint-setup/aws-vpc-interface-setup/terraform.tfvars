@@ -1,7 +1,7 @@
 public_env                               = ["public"]
 private_env                              = ["private"]
-access_key                               = "AKIA3PRKYVGSDLUF32UC"
-secret_key                               = "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"
+access_key                               = ""
+secret_key                               = ""
 region                                   = "us-east-1"
 cidr_block                               = ["10.10.0.0/16"]
 public_subnet                            = ["public_subnet"]
