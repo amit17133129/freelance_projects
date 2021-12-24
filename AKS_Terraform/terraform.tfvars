@@ -1,0 +1,10 @@
+resourcename                       = "k8s-resources"
+clustername                        = "kubernetes-aks1"
+location                           = "East US"
+dnspreffix                         = "kubecluster"
+size                               = "Standard_D2_v2"
+agentnode                          = 1
+subscription_id                    = "2e6c93b8-4ff5-4960-a548-285620b42dd9"#"b6b80a50-a776-4800-a003-2133d6f8977d"
+client_id                          = "206ed463-e25c-418c-8e71-941c3df5e676"#"75524ec5-5890-4166-ada6-b50c53a0e1bf"
+client_secret                      = "zuW7Q~t9PCbY4q8iv1BLjiOmM1Ds_fpGA6oK6"#"Gqg7Q~gzgffdPsLJDFBRreg.37Z7LMLf4V6Af"
+tenant_id                          = "fb19912b-4754-4814-ad78-ffdd5c350a59"#"6df7e80e-bc8b-427d-8114-06ff78131715"
