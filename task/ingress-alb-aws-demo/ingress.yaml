@@ -1,0 +1,27 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+    name: "eks-demo"
+    namespace: "default"
+    annotations:
+       kubernetes.io/ingress.class: alb
+       alb.ingress.kubernetes.io/scheme: internet-facing
+       alb.ingress.kubernetes.io/target-type: ip
+       alb.ingress.kubernetes.io/healthcheck-port: '3000'
+       alb.ingress.kubernetes.io/healthcheck-listen-ports: '[{"HTTP": 80}]'
+       alb.ingress.kubernetes.io/healthcheck-path: '/'
+    labels:
+       app: hello-app-ingress
+spec:
+   rules:
+   - http:
+       paths:
+       - path: /app1
+         backend:
+            serviceName: "web1"
+            servicePort: 8080
+
+       - path: /app2
+         backend:
+              serviceName: "web2"
+              servicePort: 8080
