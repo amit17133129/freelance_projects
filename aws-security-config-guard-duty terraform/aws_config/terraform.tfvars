@@ -1,0 +1,7 @@
+access_key                               = ""
+secret_key                               = ""
+region                                   = "us-east-1"
+config_rule_name                         = "my_config_rule" 
+config_configuration_recorder_name       = "my_config_recorder"
+iam_role_name                            = "config_iam_role"
+role_policy_name                         = "my-awsconfig-policy"
