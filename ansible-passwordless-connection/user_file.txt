@@ -1,2 +1,0 @@
-name = amit
-password = redhat

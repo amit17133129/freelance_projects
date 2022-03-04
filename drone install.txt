@@ -1,0 +1,62 @@
+openssl rand -hex 16
+
+docker pull drone/drone-runner-docker:1
+
+
+
+docker run -d \
+-v /var/run/docker.sock:/var/run/docker.sock \
+-e DRONE_RPC_PROTO=http \
+-e DRONE_RPC_HOST=        \
+-e DRONE_RPC_SECRET=
+-e DRONE_RUNNER_CAPACITY=2    \
+-e DRONE_RUNNER_NAME=${HOSTNAME} \
+-p 3000:3000 \
+--restart always \
+--name runner \
+drone/drone-runner-docker:1
+
+
+####################################################################
+
+
+docker run --detach \
+  --volume=/var/lib/drone:/data \
+  --env=DRONE_GITHUB_CLIENT_ID=426750455a2a7cb14f82  \
+  --env=DRONE_GITHUB_CLIENT_SECRET=f1f4e317da68ebd565fdd9eb130bee08475d8c72  \
+  --env=DRONE_RPC_SECRET=698d485dbe21a112d61b834fa3ad4cbd   \
+  --env=DRONE_SERVER_HOST=15.207.113.92   \
+  --publish=80:80 \
+  --publish=443:443 \
+  --restart=always \
+  --name=drone \
+  drone/drone:1
+
+####################################################################
+
+
+####################################################################
+docker run \
+--volume=/var/run/docker.sock:/var/run/docker.sock \
+  --volume=/var/lib/drone:/data \
+  --env=DRONE_GITHUB_SERVER=https://github.com \
+  --env=DRONE_GITHUB_CLIENT_ID=3bab83d6fd7b3fcfcb45 \
+  --env=DRONE_GITHUB_CLIENT_SECRET=c3846db9b37b030b275125a23b5c4fd753ed00c8 \
+  --env=DRONE_RPC_SECRET=9810954ba2658197f3f6870d70537dde   \
+  --env=DRONE_RUNNER_CAPACITY=2 \
+  --env=DRONE_SERVER_HOST=15.207.113.92 \
+  --env=DRONE_SERVER_PROTO=http \
+  --env=DRONE_TLS_AUTOCERT=true \
+  --env=DRONE_RPC_DUMP_HTTP=true \
+  --env=DRONE_RPC_DUMP_HTTP_BODY=true\
+  --env=DRONE_LOGS_TRACE=true \
+  --env=DOCKER_API_VERSION=1.39 \
+  --env=DRONE_AGENTS_DISABLED=true \
+  --env=DRONE_USER_FILTER=amit17133129 \
+  --env=DRONE_USER_CREATE=username:amit17133129,admin:true \
+  --publish=80:80 \
+  --publish=443:443 \
+  --restart=always \
+  --detach=true \
+  --name=drone \
+  drone/drone:1

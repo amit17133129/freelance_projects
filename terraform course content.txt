@@ -1,0 +1,25 @@
+-------------------------------------------------------
+Contents Of Terraform 20 hours Course
+-------------------------------------------------------
+1.  Introduction to Infrastructure as Code with Terraform
+2.  Install Terraform
+3.  Using terraform cli
+4.  Lock and Upgrade Provider Versions
+5.  Build Infrastructure
+6.  Destroy Infrastructure
+7.  Store Remote State
+8.  Customize Terraform Configuration with Variables
+9.  Output Data from Terraform
+10.  Create Resource Dependencies
+11. Use Refresh-Only Mode to Sync Terraform State
+12. Automate Terraform with GitLab
+13. Manage Terraform Versions
+14. Provision an EKS Cluster on AWS
+15. terraform backend
+16. Destroy Infrastructure
+17. Query Data with Outputs
+18. Define Input Variables
+19. Troubleshoot Terraform
+20. Terraform contional operators 
+-------------------------------------------------------
+
