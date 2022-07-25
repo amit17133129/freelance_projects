@@ -1,0 +1,4 @@
+ARG BASE_IMAGE=atlassian/jira-software:latest
+FROM $BASE_IMAGE
+
+COPY support            /opt/atlassian/support

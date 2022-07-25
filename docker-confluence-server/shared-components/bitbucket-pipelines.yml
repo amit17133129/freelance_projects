@@ -1,0 +1,11 @@
+image: python:3.9-slim-bullseye
+
+pipelines:
+  branches:
+    '**':
+      - step:
+          name: Run local tests
+          script:
+            - apt-get update
+            - apt-get install -y python3-pytest python3-jinja2
+            - pytest-3 image/tests.py
