@@ -1,3 +1,11 @@
+# eks-alb-ingress-controller
+
+https://aws.amazon.com/premiumsupport/knowledge-center/eks-alb-ingress-controller-fargate/
+
+
+# push an image to ecr 
+
+https://docs.aws.amazon.com/AmazonECR/latest/userguide/docker-push-ecr-image.html
 Setting up your ingress.
 
 Create an Amazon EKS cluster, service account policy, and RBAC policies
