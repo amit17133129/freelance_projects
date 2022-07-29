@@ -26,7 +26,7 @@ curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/miniku
 sudo apt install conntrack -y
 ```
 ------------------------------------------------------------------
-### Installing dockerhim.
+### Installing docker-shim.
 ```
 git clone https://github.com/Mirantis/cri-dockerd.git
 ```
