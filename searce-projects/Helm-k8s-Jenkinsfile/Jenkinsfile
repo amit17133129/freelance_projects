@@ -1,0 +1,168 @@
+pipeline {
+ 
+    agent any
+    
+    parameters {
+        string defaultValue: 'environment-name', description: '', name: 'environment', trim: false
+        }
+    
+    environment {
+       IMAGE_NAME = "image_name"
+       MANIFEST = 'helm-charts/deployment'
+       APP_FOLDER = 'open-ci/prod-arzooo'
+       PROJECT_ID = 'project_name'
+       CREDENTIALS = 'Open-PREPROD-GCP'
+   }
+
+    stages {
+
+        stage('Clone Repos') {
+            steps {
+
+                // send build started notifications
+                wrap([$class: 'BuildUser']) {
+                    slackSend (color: '#FFFF00', message: "STARTED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL}) by user ${BUILD_USER}")
+                }
+
+                // Clean before build
+                cleanWs()
+
+                checkout changelog: false,
+                    poll: false, 
+                    scm: [$class: 'GitSCM', 
+                    branches: [[name: '*/master']], 
+                    extensions: [], 
+                    userRemoteConfigs: [[
+                        credentialsId: 'source:Open-PREPROD-GCP', 
+                        url: ''
+                        ]]
+                    ]
+                
+                checkout([
+                    $class: 'GitSCM', 
+                    branches: [[
+                        name: '*/${branch_name}'
+                        ]], 
+                        doGenerateSubmoduleConfigurations: false, 
+                        extensions: [[
+                            $class: 'RelativeTargetDirectory', 
+                            relativeTargetDir: 'code'
+                            ]], 
+                            submoduleCfg: [], 
+                            userRemoteConfigs: [[
+                                credentialsId: '', 
+                                url: ''
+                                ]]
+                        ]
+                ) 
+            }
+            // post {
+            //     failure {
+            //         slackSend (color: '#FF0000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL}) On Cloning repo")
+            //     }
+
+            //     aborted {
+            //         slackSend (color: '#FF0000', message: "ABORTED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL}) On Cloning repo")
+            //     }
+            // }
+        }
+        
+        stage('Merge Repos') {
+           steps {
+               sh 'cp -r code/* open-ci/${environment}/'
+               sh 'sed -i "s/latest/${BUILD_NUMBER}/g" helm-charts/${environment}.yaml'
+           }
+        //    post {
+        //         failure {
+        //             slackSend (color: '#FF0000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL}) at Merging repo")
+        //         }
+
+        //         aborted {
+        //             slackSend (color: '#FF0000', message: "ABORTED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL}) at Merging repo")
+        //         }
+        //     }
+
+        }
+        
+        stage('Build Image') {
+            steps {
+                dir(APP_FOLDER){
+                    script{
+                        // sh 'cp env.prod-frontend-k8 .env'
+                        dockerImage = docker.build("${IMAGE_NAME}:${env.BUILD_NUMBER}", "--no-cache .")
+                    }
+                }
+            }
+            // post {
+            //     failure {
+            //         slackSend (color: '#FF0000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL}) on Build Image")
+            //     }
+
+            //     aborted {
+            //         slackSend (color: '#FF0000', message: "ABORTED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL}) on Build Image")
+            //     }
+            // }
+        }
+
+        stage('Publish Image') {
+            steps {
+                script {
+                    docker.withRegistry( 'https://gcr.io', 'gcr:Open-PREPROD-GCP' ) {
+    			        dockerImage.push()
+                        dockerImage.push('latest')
+                    }
+                }   
+            }
+            // post {
+            //     failure {
+            //         slackSend (color: '#FF0000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL}) on Publish Image")
+            //     }
+
+            //     aborted {
+            //         slackSend (color: '#FF0000', message: "ABORTED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL}) on Publish Image")
+            //     }
+            // }
+        }
+
+        stage('HELM Deploy to GKE to asia-south1') {
+          steps{
+                sh 'gcloud container clusters get-credentials cluster-name --region asia-south1 --project project-name'
+                sh 'helm upgrade --install -f  helm-charts/${environment}.yaml  ${environment}  ${MANIFEST}   -n namespace'
+                    
+              }
+            //   post {
+            //      success {
+            //         slackSend (color: '#00FF00', message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL}) on deploy stage")
+            //         }
+
+            //      failure {
+            //         slackSend (color: '#FF0000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL}) on deploy stage")
+            //         }
+            //      aborted {
+            //         slackSend (color: '#FF0000', message: "ABORTED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL}) on deploy stage")
+            //         }
+            // }
+           }
+        
+        stage('HELM Deploy to GKE to asia-south2') {
+          steps{
+                sh 'gcloud container clusters get-credentials cluster_name --region asia-south2 --project project_name'
+                sh 'helm upgrade --install -f  helm-charts/${environment}.yaml  ${environment}  ${MANIFEST}   -n namespace'
+                    
+              }
+            //   post {
+            //      success {
+            //         slackSend (color: '#00FF00', message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL}) on deploy stage")
+            //         }
+
+            //      failure {
+            //         slackSend (color: '#FF0000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL}) on deploy stage")
+            //         }
+            //      aborted {
+            //         slackSend (color: '#FF0000', message: "ABORTED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL}) on deploy stage")
+            //         }
+            // }
+           }
+
+    }
+}
