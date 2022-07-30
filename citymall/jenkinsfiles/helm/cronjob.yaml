@@ -1,0 +1,55 @@
+{{ if .Values.jobsEnabled }}
+{{- range $key, $value := .Values.jobnamecron }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ $key | quote }}
+spec:
+  schedule: {{ $value | quote }}
+  startingDeadlineSeconds: 200
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+        {{- if $.Values.promtail }}
+          - name: promtail-container
+            image: 414085459896.dkr.ecr.ap-south-1.amazonaws.com/promtail:main
+            args:
+            - -config.file=/etc/promtail/promtail.yaml
+            imagePullPolicy: {{ $.Values.image.pullPolicy }}
+            volumeMounts:
+            - name: promtail-config
+              mountPath: /etc/promtail
+            - name: shared-data
+              mountPath: /tmp
+        {{- end }}
+          - name: cron-container
+            image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag }}"
+            imagePullPolicy: Always
+            envFrom:
+              - configMapRef:
+                  name: {{ $.Release.Name }}-configmap
+        {{- if $.Values.promtail }}
+            volumeMounts:
+            - name: shared-data
+              mountPath: /tmp
+        {{- end }}
+            resources:
+              {{- toYaml $.Values.resources | nindent 13 }}
+        {{- if $.Values.promtail }}
+          volumes:
+          - name: promtail-config
+            configMap:
+              name: {{ $.Release.Name }}-promtail-configmap
+          - name: shared-data
+            emptyDir: {}
+        {{- end }}
+          terminationGracePeriodSeconds: 60
+          restartPolicy: Never
+  concurrencyPolicy: Replace
+---
+{{- end }}
+{{ end }}
