@@ -1,0 +1,132 @@
+def Branch = env.BRANCH_NAME.split('/').join('-')
+def environmentName = ''
+def releaseBranchName = ''
+def shortCommit = ''
+def tag = ''
+
+pipeline {
+agent {
+        label "ec2-prod"
+    }
+parameters {
+        extendedChoice(
+        defaultValue: '',
+        description: 'Select application',
+        multiSelectDelimiter: ',',
+        name: 'Application',
+        quoteValue: false,
+        saveJSONParameterToFile: false,
+        type: 'PT_CHECKBOX',
+        value:'adminroles,freshdesk-agents-to-analytics-pgsql',
+        visibleItemCount: 20)
+}
+environment {
+    CLUSTER_NAME = 'dms'
+    APP_NAME = ''
+}
+stages {
+    stage('Setting up environment'){
+            steps {
+                sh ''' aws eks update-kubeconfig --name app-services --region ap-south-1 '''
+                sh "aws ecr get-login-password --region ap-south-1 | sudo docker login --username AWS --password-stdin "
+            script {
+                apps = Application.split(',')
+                environmentName = 'dms'
+                shortCommit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
+                currentBuild.displayName = apps.join(',') + '-' + shortCommit
+                releaseBranchName = sh(script: "echo $environmentName | tr -d '\n'", returnStdout: true)
+            }
+        }
+        }
+    stage('Checkout to the repo') {
+        steps {
+        script {
+          checkout scm
+        }
+        }
+    }
+
+
+    stage('Build/Push to ECR') {
+    steps {
+        script {
+        docker.withRegistry(
+        'https://414085459896.dkr.ecr.us-east-2.amazonaws.com/',
+        ) {
+            envName = environmentName.split('-')[0]
+            tag = envName + '-' + shortCommit
+            apps = Application.split(',')
+            path = ''
+
+            for (app in apps) {
+                path = "./deployment/dockerfiles/${app}.Dockerfile"
+
+                sh "sudo DOCKER_BUILDKIT=1 docker build -f $path -t $app  ."
+
+                sh """
+                #!/bin/bash
+                sudo docker tag $app:latest 414xxxx.dkr.ecr.ap-south-1.amazonaws.com/${env.CLUSTER_NAME}/${app}:$tag
+                sudo docker push 4140xxxx.dkr.ecr.ap-south-1.amazonaws.com/${env.CLUSTER_NAME}/${app}:$tag
+                sudo docker rmi -f 41408xxxx.dkr.ecr.ap-south-1.amazonaws.com/${env.CLUSTER_NAME}/${app}:$tag
+                """
+            }
+        }
+        }
+        }
+        }
+
+
+      stage('Deploy Application') {
+        steps {
+          script {
+              apps = Application.split(',')
+
+              for (app in apps) {
+                  valueFile = app + '-values.yaml'
+
+                  envName = environmentName.split('-')[0]
+                  tag = envName + '-' + shortCommit
+
+                  sh "helm secrets upgrade $app ./deployment/helm --install --wait --dry-run --namespace=${environmentName} \
+                    --set=app.name=$app \
+                    --set=image.tag=$tag \
+                    --values=./deployment/jenkins/production/environment-vars/secrets.production.yaml \
+                    --values=./deployment/jenkins/production/environment-vars/config.production.yaml \
+                    --values=./deployment/jenkins/production/commands/$valueFile \
+                    --atomic"
+          }
+          }
+          }
+        }
+      }
+
+  post {
+        always {
+      script {
+        apps = Application.split(',')
+          if ( currentBuild.currentResult == 'SUCCESS' ) {
+          buildSummary = "Job: ${env.JOB_NAME}\n Status: *SUCCESS*\n Build Url: ${env.BUILD_URL}/console \n Application: ${apps}"
+          slackSend(
+                channel: 'jenkins-cm-deployments',
+                teamDomain: 'city-mall',
+                tokenCredentialId: 'slackToken',
+                color : 'good',
+                message: "${buildSummary}",
+
+                )
+          }
+
+            else {
+          buildSummary = "Job: ${env.JOB_NAME}\n Status: *FAILURE*\n Build Url: ${env.BUILD_URL}/console \n Application: ${apps}"
+          slackSend(
+                channel: 'jenkins-cm-deployments',
+                teamDomain: 'city-mall',
+                tokenCredentialId: 'slackToken',
+                color : 'danger',
+                message: "${buildSummary}",
+                )
+            }
+      }
+        }
+  }
+}
