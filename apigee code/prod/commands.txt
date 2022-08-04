@@ -1,0 +1,12 @@
+terraform init
+terraform plan -out aks.tfplan
+terraform apply "aks.tfplan"
+
+terraform workspace list
+terraform workspace new apigeehybridnonprod
+terraform workspace new apigeehybridprod
+terraform workspace select ABC
+terraform workspace delete ABC
+
+terraform state list
+terraform state show ABC
