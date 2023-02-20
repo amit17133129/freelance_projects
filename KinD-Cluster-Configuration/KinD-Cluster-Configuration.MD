@@ -1,3 +1,5 @@
+# KinD Cluster Configurations
+
 kind is an utility for running Kubernetes clusters locally using Docker containers as "nodes." type was created to test Kubernetes, but it can also be used for local development and continuous integration.
 kind is a Kubernetes SIGs project that is significantly distinct from minikube. As the name implies, it partitions the cluster into Docker containers. When compared to starting a VM, this results in a much quicker startup speed. The process of creating a cluster is quite similar to that of minikube.
 Pre-requisites -
