@@ -16,7 +16,7 @@ rules:
   resources: ["deployments", "replicasets", "pods"]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 ```  
-## kubectl apply -f role.yaml
+`kubectl apply -f role.yaml`
 ####################################################################################
 Then create rolebinding
 ```
@@ -34,7 +34,7 @@ roleRef:
   name: development-manager
   apiGroup: ""
 ```
-## kubectl apply -f rolebinding.yaml
+`kubectl apply -f rolebinding.yaml`
 ####################################################################################
 Then edit the below file
 
