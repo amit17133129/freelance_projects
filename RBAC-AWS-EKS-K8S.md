@@ -38,7 +38,7 @@ roleRef:
 ####################################################################################
 Then edit the below file
 
-kubectl edit -n kube-system configmap/aws-auth
+`kubectl edit -n kube-system configmap/aws-auth`
 
 ```
   mapRoles: |
