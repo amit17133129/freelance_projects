@@ -5,6 +5,7 @@ Create Two users from aws console and give both adminstrator permission
 ####################################################################################
 
 Then we will be creating the role and role bindings
+```
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -14,11 +15,11 @@ rules:
 - apiGroups: ["", "extensions", "apps"]
   resources: ["deployments", "replicasets", "pods"]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-  
+```  
 ## kubectl apply -f role.yaml
 ####################################################################################
 Then create rolebinding
-
+```
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -32,7 +33,7 @@ roleRef:
   kind: Role
   name: development-manager
   apiGroup: ""
-
+```
 ## kubectl apply -f rolebinding.yaml
 ####################################################################################
 Then edit the below file
@@ -62,13 +63,14 @@ Only add the mapUsers section where we have k8sadmin and developer users
 
 
 Now after this you will be exporting below command
+```
 export AWS_DEFAULT_PROFILE="k8sadmin"   -- for all the access
 export AWS_DEFAULT_PROFILE="developer"  -- for the limited access which you have given in the role creation above.
-
-
+```
+```
 kubectl get pods -n development -- will only for developer
 kubectl get pods -- will not work for developer
-
+```
 
 referal links: 
 
