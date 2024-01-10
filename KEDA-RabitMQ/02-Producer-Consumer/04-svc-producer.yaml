@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: rabbitmq-producer-service
+  labels:
+    run: rabbitmq-producer
+spec:
+  type: LoadBalancer
+  # type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 80
+      name: http-port
+      protocol: TCP
+  selector:
+    run: rabbitmq-producer    

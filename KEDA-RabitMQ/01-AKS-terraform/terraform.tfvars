@@ -1,0 +1,10 @@
+resourcename                       = "k8s-resources"
+clustername                        = "kubernetes-aks1"
+location                           = "East US"
+dnspreffix                         = "kubecluster"
+size                               = "Standard_D2_v2"
+agentnode                          = 1
+subscription_id                    = ""
+client_id                          = ""
+client_secret                      = ""
+tenant_id                          = ""

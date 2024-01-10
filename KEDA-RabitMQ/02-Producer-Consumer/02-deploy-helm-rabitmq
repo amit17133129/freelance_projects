@@ -1,0 +1,10 @@
+helm repo add bitnami https://charts.bitnami.com/bitnami
+# helm repo add azure-marketplace https://marketplace.azurecr.io/helm/v1/repo
+
+helm repo update
+
+helm upgrade --install rabbitmq `
+    --version 10.2.1 `
+    --set auth.username=user `
+    --set auth.password=PASSWORD `
+    bitnami/rabbitmq
