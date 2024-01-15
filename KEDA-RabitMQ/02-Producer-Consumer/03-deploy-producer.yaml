@@ -25,10 +25,7 @@ spec:
     spec:
       containers:
         - name: techtalksproducer
-          image: nileshgule/techtalksproducer:rabbitmq-keda-6.0 
-          # image: ngacrregistry.azurecr.io/nileshgule/techtalksproducer:rabbitmq-keda-5.0
-          # image: ngacrregistry.azurecr.io/nileshgule/techtalksproducer:rabbitmq-keda-6.0
-          # image: nileshgule/techtalksproducer:rabbitmq-keda-5.0
+          image: amitsharma17133129/keda-rabbitmq-producer:v1 
           env:
             - name: RABBITMQ_HOST_NAME
               value: "rabbitmq"
