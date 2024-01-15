@@ -20,9 +20,7 @@ spec:
     spec:
       containers:
         - name: rabbitmq-consumer
-          #image: nileshgule/techtalksconsumer:rabbitmq-keda-6.0
-          # image: ngacrregistry.azurecr.io/nileshgule/techtalksconsumer:rabbitmq-keda-5.0
-          image: nileshgule/techtalksconsumer:rabbitmq-keda-5.0
+          image: amitsharma17133129/keda-rabbitmq-consumer:v1
           env:
             - name: ASPNETCORE_ENVIRONMENT
               value: "Development"
