@@ -1,0 +1,183 @@
+Reference Doc:
+https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/#installing-runtime
+https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
+https://cri-o.io/
+https://github.com/cri-o/cri-o/blob/main/install.md
+https://docs.tigera.io/calico/latest/getting-started/kubernetes/quickstart
+https://github.com/kubernetes-sigs/metrics-server
+https://datacenterdope.wordpress.com/2020/01/20/installing-kubernetes-metrics-server-with-kubeadm/#:~:text=Install%20Metrics%2Dserver%20on%20a,metrics%2Dserver'...
+https://www.tutorialworks.com/difference-docker-containerd-runc-crio-oci/
+https://github.com/projectcalico/calico/tree/master/manifests
+
+
+
+
+For best performance, Kubernetes requires that swap is disabled on the master/slave system, edit the /etc/fstab file To make the changes persistent
+$ swapoff -a
+
+install the traffic control utility package
+$ dnf install -y iproute-tc
+
+$ modprobe overlay
+$ modprobe br_netfilter
+
+$ cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
+overlay
+br_netfilter
+EOF
+
+
+$ cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-iptables  = 1
+net.ipv4.ip_forward                 = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+EOF
+
+sysctl --system
+
+# Set SELinux in permissive mode (effectively disabling it)
+# disable SELinux and set it to ‘permissive’ in order to allow smooth communication between the nodes and the pods.
+$ setenforce 0
+$ sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+
+
+Container Runtime is an application that supports running containers, we will install CRI-O
+$ export VERSION=1.26
+$ curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable.repo https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/CentOS_8/devel:kubic:libcontainers:stable.repo
+$ curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable:cri-o:$VERSION.repo https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:$VERSION/CentOS_8/devel:kubic:libcontainers:stable:cri-o:$VERSION.repo
+
+$ dnf install cri-o
+$ systemctl enable crio
+$ systemctl start crio
+
+
+
+
+# This overwrites any existing configuration in /etc/yum.repos.d/kubernetes.repo
+cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
+[kubernetes]
+name=Kubernetes
+baseurl=https://pkgs.k8s.io/core:/stable:/v1.29/rpm/
+enabled=1
+gpgcheck=1
+gpgkey=https://pkgs.k8s.io/core:/stable:/v1.29/rpm/repodata/repomd.xml.key
+exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni
+EOF
+
+
+sudo yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+sudo systemctl enable --now kubelet
+
+initialize a Kubernetes cluster using the kubeadm command as follows. This initializes a control plane in the master node., use network range of kube server below cidr
+$ kubeadm init --pod-network-cidr=192.168.0.0/16
+
+
+$ mkdir -p $HOME/.kube
+$ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+$ sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+By default, apps won’t get scheduled on the master node. If you want to use the master node for scheduling apps, taint the master node.
+$ kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+
+After Installing Calico CNI, nodes state will change to Ready state, DNS service inside the cluster would be functional and containers can start communicating with each other.
+To install Calico CNI, run the following command from the master node
+$ kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/calico.yaml
+or 
+
+
+$ kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/tigera-operator.yaml
+
+Before creating this manifest, read its contents and make sure its settings are correct for your environment. For example, you may need to change the default IP pool CIDR to match your pod network CIDR.
+
+$ kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/custom-resources.yaml
+$ watch kubectl get pods -n calico-system
+
+or 
+curl -O https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml
+
+or
+(this link work perfectly)
+https://raw.githubusercontent.com/projectcalico/calico/master/manifests/calico.yaml
+
+# Auto-detect the BGP IP address.
+            - name: IP
+              value: "autodetect"
+            - name: IP_AUTODETECTION_METHOD
+              value: "interface=eth0"
+
+
+
+
+
+$ kubectl get pods -n kube-system
+
+$ kubectl get nodes
+$ kubectl get nodes -o wide
+
+$ kubectl get pods --all-namespaces
+
+You verify all the cluster component health statuses using the following command.
+$ kubectl get --raw='/readyz?verbose'
+
+$ kubectl cluster-info 
+
+If you missed copying the join command, execute the following command in the master node to recreate the token with the join command
+$ kubeadm token create --print-join-command
+
+add the worker node to the Kubernetes cluster
+$ kubeadm join 10.128.15.228:6443 --token cqb8vy.iicmmqrb1m8u9cob --discovery-token-ca-cert-hash sha256:79748a56f603e6cc57f67bf90b7db5aebe090107d540d6cc8a8f65b785de7543
+
+$ kubectl  get pods -n kube-system
+$ kubectl -n kube-system exec -it calico-node-5k4kh -- calico-node -show-status
+$ kubectl -n kube-system exec -it calico-node-5k4kh -- calico-node -bird-ready
+$ kubectl -n kube-system exec -it calico-node-5k4kh -- calico-node -bird-live
+
+$ kubectl get nodes
+$ kubectl label node  ip-172-31-42-227.ap-south-1.compute.internal   node-role.kubernetes.io/worker=worker
+
+
+Kubeadm doesn’t install metrics server component during its initialization.
+$ kubectl apply -f https://raw.githubusercontent.com/techiescamp/kubeadm-scripts/main/manifests/metrics-server.yaml
+$ kubectl top nodes
+
+$ kubectl create deployment lwdeploy1 --image=vimal13/apache-webserver-php --replicas=5
+$ kubectl expose deployment lwdeploy1 --type=NodePort --port=80
+
+$ kubectl edit deploy lwdeploy1
+$ kubectl  label node ip-172-31-35-26.ap-south-1.compute.internal region=india
+spec:
+      containers:
+      - image: vimal13/apache-webserver-php
+        name: apache-webserver-php
+      nodeSelector:
+        region: india
+
+
+$ kubectl  exec -it lwdeploy1-67465f89c6-2qlw5 -- bash
+[root@lwdeploy1-67465f89c6-2qlw5 /]# curl  192.168.201.1
+
+
+
+Once the metrics server objects are deployed, it takes a minute for you to see the node and pod metrics using the top command.
+$ kubectl top nodes
+$ kubectl top pod -n kube-system
+$ kubectl top nodes --sort-by=cpu (can sort by "cpu" or "memory")
+
+Client Node: get kubeconfig file from master node "/etc/kubernetes/admin.conf"
+$ kubectl get pods --kubeconfig kubeconfig --insecure-skip-tls-verify
+
+
+Reset Cluster
+$ kubeadm reset
+$ cd /etc/cni/net.d/
+$ rm calico-kubeconfig
+$ rm 10-calico.conflist
+$ iptables -F  
+$ iptables -t nat -F
+$ iptables -t mangle  -F
+
+
+
+
+
+
